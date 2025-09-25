@@ -33,7 +33,9 @@ def custom_login(request):
         if user.check_password(password) and user.is_active:
             # Создаем или получаем существующий токен из базы данных
             token, created = Token.objects.get_or_create(user=user)
-            logger.info(f"Token {'created' if created else 'retrieved'}: {token.key}")
+            logger.info(
+                f"Token {'created' if created else 'retrieved'}: {token.key}"
+            )
             return Response({
                 'auth_token': token.key,
                 'user': {
@@ -45,15 +47,18 @@ def custom_login(request):
                 }
             })
         else:
-            logger.warning(f"Invalid password or inactive user for {email}")
+            logger.warning(
+                f"Invalid password or inactive user for {email}")
             return Response(
-                {'error': 'Невозможно войти с предоставленными учетными данными.'},
+                {'error': 'Невозможно войти с предоставленными '
+                          'учетными данными.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
     except User.DoesNotExist:
         logger.warning(f"User not found: {email}")
         return Response(
-            {'error': 'Невозможно войти с предоставленными учетными данными.'},
+            {'error': 'Невозможно войти с предоставленными '
+                      'учетными данными.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 

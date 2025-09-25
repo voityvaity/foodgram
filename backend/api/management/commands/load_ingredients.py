@@ -11,10 +11,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         data_dir = Path('/app/data')
-        
+
         self.stdout.write(f'Data directory: {data_dir}')
         self.stdout.write(f'Data directory exists: {data_dir.exists()}')
-        self.stdout.write(f'Files in data directory: {list(data_dir.iterdir())}')
+        self.stdout.write(
+            f'Files in data directory: {list(data_dir.iterdir())}')
 
         # Загрузка из CSV
         csv_path = data_dir / 'ingredients.csv'

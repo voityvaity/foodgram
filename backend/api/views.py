@@ -47,16 +47,17 @@ def test_ingredients(request):
     """Тестовый endpoint для проверки фильтрации ингредиентов."""
     name = request.GET.get('name')
     print(f"DEBUG: name parameter = {name}")
-    
+
     queryset = Ingredient.objects.all()
     if name:
         queryset = queryset.filter(name__istartswith=name)
         print(f"DEBUG: filtered queryset count = {queryset.count()}")
     else:
         print("DEBUG: no name parameter, returning all ingredients")
-    
+
     serializer = IngredientSerializer(queryset, many=True)
     return Response(serializer.data)
+
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = []
     # Отключаем пагинацию для ингредиентов
     pagination_class = None
-    
+
     def get_queryset(self):
         """Кастомная фильтрация по параметру name."""
         queryset = Ingredient.objects.all()
@@ -83,7 +84,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             print("DEBUG: no name parameter, returning all ingredients")
         return queryset
-    
+
     def list(self, request, *args, **kwargs):
         """Переопределяем list для отключения пагинации."""
         queryset = Ingredient.objects.all()
@@ -95,7 +96,7 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
             print(f"DEBUG: filtered queryset count = {queryset.count()}")
         else:
             print("DEBUG: no name parameter, returning all ingredients")
-        
+
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -111,7 +112,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     pagination_class = PageNumberPagination
-    filter_backends = []
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = RecipeFilter
     permission_classes = [IsAuthorOrReadOnly]
 
     def list(self, request, *args, **kwargs):

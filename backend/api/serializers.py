@@ -48,7 +48,8 @@ class UserSerializer(serializers.ModelSerializer):
                 representation['avatar'])
             # Добавляем временную метку к URL аватара
             import time
-            representation['avatar'] = f"{avatar_url}?t={int(time.time())}"
+            representation['avatar'] = (
+                f"{avatar_url}?t={int(time.time())}")
         return representation
 
 
@@ -157,14 +158,15 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Добавляем временную метку к URL изображения для предотвращения кэширования
+        # Добавляем временную метку к URL изображения против кэширования
         if (representation.get('image')
                 and self.context.get('request')):
             image_url = self.context['request'].build_absolute_uri(
                 representation['image'])
             # Добавляем временную метку к URL изображения
             import time
-            representation['image'] = f"{image_url}?t={int(time.time())}"
+            representation['image'] = (
+                f"{image_url}?t={int(time.time())}")
         return representation
 
 
@@ -221,7 +223,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     def validate_tags(self, value):
         if not value:
-            raise serializers.ValidationError("Должен быть хотя бы один тег.")
+            raise serializers.ValidationError(
+                "Должен быть хотя бы один тег.")
         return value
 
     def create(self, validated_data):
@@ -315,7 +318,8 @@ class RecipeShortSerializer(serializers.ModelSerializer):
                 representation['image'])
             # Добавляем временную метку к URL изображения
             import time
-            representation['image'] = f"{image_url}?t={int(time.time())}"
+            representation['image'] = (
+                f"{image_url}?t={int(time.time())}")
         return representation
 
 
@@ -379,12 +383,14 @@ class CustomTokenCreateSerializer(serializers.Serializer):
                     logger.warning(
                         f"Invalid password or inactive user for {email}")
                     raise serializers.ValidationError(
-                        'Невозможно войти с предоставленными учетными данными.'
+                        'Невозможно войти с предоставленными '
+                        'учетными данными.'
                     )
             except User.DoesNotExist:
                 logger.warning(f"User not found: {email}")
                 raise serializers.ValidationError(
-                    'Невозможно войти с предоставленными учетными данными.'
+                    'Невозможно войти с предоставленными '
+                    'учетными данными.'
                 )
         else:
             logger.warning("Missing email or password")
