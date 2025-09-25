@@ -14,17 +14,6 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   backend:
     build: ../backend
@@ -33,7 +22,6 @@ services:
       - ../data:/app/data           # CSV/JSON будут доступны в /app/data
       - static_volume:/app/staticfiles
       - media_volume:/app/mediafiles
-      - ../backend/logs:/app/logs   # Логи
     depends_on:
       db:
         condition: service_healthy  # Ждём пока Postgres будет готов
@@ -47,39 +35,17 @@ services:
     command: >
       sh -c "python manage.py makemigrations &&
              python manage.py migrate &&
-             python manage.py load_ingredients || echo 'Failed to load ingredients' &&
-             python manage.py load_tags || echo 'Failed to load tags' &&
+             python manage.py load_ingredients &&
+             python manage.py load_tags &&
              python manage.py collectstatic --noinput &&
              gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 512M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   frontend:
     build: ../frontend
     volumes:
       - frontend_build:/app/build
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-        reservations:
-          memory: 128M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
   nginx:
     image: nginx:1.25.4-alpine
@@ -94,17 +60,6 @@ services:
       - backend
       - frontend
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-        reservations:
-          memory: 128M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
 
 volumes:
   postgres_data:

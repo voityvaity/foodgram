@@ -41,12 +41,14 @@ class UserSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Добавляем полный URL для аватара
+        # Добавляем полный URL для аватара с временной меткой
         if (representation.get('avatar')
                 and self.context.get('request')):
-            request = self.context['request']
-            representation['avatar'] = request.build_absolute_uri(
+            avatar_url = self.context['request'].build_absolute_uri(
                 representation['avatar'])
+            # Добавляем временную метку к URL аватара
+            import time
+            representation['avatar'] = f"{avatar_url}?t={int(time.time())}"
         return representation
 
 
@@ -125,10 +127,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     author = UserSerializer(read_only=True)
     ingredients = IngredientInRecipeSerializer(
-        source='ingredientinrecipe_set',
-        many=True,
-        read_only=True
-    )
+        source='ingredientinrecipe_set', many=True, read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
@@ -158,11 +157,14 @@ class RecipeSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Добавляем полный URL для изображения рецепта
-        if representation.get('image') and self.context.get('request'):
-            request = self.context['request']
-            representation['image'] = request.build_absolute_uri(
+        # Добавляем временную метку к URL изображения для предотвращения кэширования
+        if (representation.get('image')
+                and self.context.get('request')):
+            image_url = self.context['request'].build_absolute_uri(
                 representation['image'])
+            # Добавляем временную метку к URL изображения
+            import time
+            representation['image'] = f"{image_url}?t={int(time.time())}"
         return representation
 
 
@@ -307,11 +309,13 @@ class RecipeShortSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        # Добавляем полный URL для изображения
+        # Добавляем полный URL для изображения с временной меткой
         if representation.get('image') and self.context.get('request'):
-            request = self.context['request']
-            representation['image'] = request.build_absolute_uri(
+            image_url = self.context['request'].build_absolute_uri(
                 representation['image'])
+            # Добавляем временную метку к URL изображения
+            import time
+            representation['image'] = f"{image_url}?t={int(time.time())}"
         return representation
 
 
@@ -357,26 +361,28 @@ class CustomTokenCreateSerializer(serializers.Serializer):
         email = attrs.get('email')
         password = attrs.get('password')
 
-        logger.info("Token creation attempt received")
+        logger.info(f"Token creation attempt for email: {email}")
 
         if email and password:
             # Пытаемся найти пользователя по email
             try:
                 user = User.objects.get(email=email)
-                logger.info(f"User found, is_active: {user.is_active}")
+                logger.info(
+                    f"User found: {user.email}, is_active: {user.is_active}")
 
                 # Проверяем пароль
                 if user.check_password(password) and user.is_active:
                     attrs['user'] = user
-                    logger.info("Password validation successful")
+                    logger.info(f"Password validation successful for {email}")
                     return attrs
                 else:
-                    logger.warning("Invalid password or inactive user")
+                    logger.warning(
+                        f"Invalid password or inactive user for {email}")
                     raise serializers.ValidationError(
                         'Невозможно войти с предоставленными учетными данными.'
                     )
             except User.DoesNotExist:
-                logger.warning("User not found")
+                logger.warning(f"User not found: {email}")
                 raise serializers.ValidationError(
                     'Невозможно войти с предоставленными учетными данными.'
                 )

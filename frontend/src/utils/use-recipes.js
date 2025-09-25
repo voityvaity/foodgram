@@ -37,7 +37,7 @@ export default function useRecipes () {
         return recipe
       })
       setRecipes(recipesUpdated)
-      callback && callback(toAdd)
+      callback && callback()
     })
     .catch(err => {
       const { errors } = err

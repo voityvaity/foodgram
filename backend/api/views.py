@@ -46,18 +46,17 @@ from .serializers import (
 def test_ingredients(request):
     """Тестовый endpoint для проверки фильтрации ингредиентов."""
     name = request.GET.get('name')
-    logger.debug(f"name parameter = {name}")
-
+    print(f"DEBUG: name parameter = {name}")
+    
     queryset = Ingredient.objects.all()
     if name:
         queryset = queryset.filter(name__istartswith=name)
-        logger.debug(f"filtered queryset count = {queryset.count()}")
+        print(f"DEBUG: filtered queryset count = {queryset.count()}")
     else:
-        logger.debug("no name parameter, returning all ingredients")
-
+        print("DEBUG: no name parameter, returning all ingredients")
+    
     serializer = IngredientSerializer(queryset, many=True)
     return Response(serializer.data)
-
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -71,26 +70,32 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = []
     # Отключаем пагинацию для ингредиентов
     pagination_class = None
-
-    def _filter_by_name(self, queryset):
-        """Фильтрация по имени ингредиента."""
-        name = self.request.GET.get('name')
-        logger.debug(f"name parameter = {name}")
-        if name:
-            queryset = queryset.filter(name__istartswith=name)
-            logger.debug(f"filtered queryset count = {queryset.count()}")
-        else:
-            logger.debug("no name parameter, returning all ingredients")
-        return queryset
-
+    
     def get_queryset(self):
         """Кастомная фильтрация по параметру name."""
         queryset = Ingredient.objects.all()
-        return self._filter_by_name(queryset)
-
+        name = self.request.GET.get('name')
+        print(f"DEBUG: name parameter = {name}")
+        if name:
+            # Поиск по началу названия ингредиента (регистронезависимый)
+            queryset = queryset.filter(name__istartswith=name)
+            print(f"DEBUG: filtered queryset count = {queryset.count()}")
+        else:
+            print("DEBUG: no name parameter, returning all ingredients")
+        return queryset
+    
     def list(self, request, *args, **kwargs):
         """Переопределяем list для отключения пагинации."""
-        queryset = self.get_queryset()
+        queryset = Ingredient.objects.all()
+        name = request.GET.get('name')
+        print(f"DEBUG: name parameter = {name}")
+        if name:
+            # Поиск по началу названия ингредиента (регистронезависимый)
+            queryset = queryset.filter(name__istartswith=name)
+            print(f"DEBUG: filtered queryset count = {queryset.count()}")
+        else:
+            print("DEBUG: no name parameter, returning all ingredients")
+        
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -106,9 +111,16 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     pagination_class = PageNumberPagination
-    # filter_backends = [DjangoFilterBackend]
-    # filterset_class = RecipeFilter
+    filter_backends = []
     permission_classes = [IsAuthorOrReadOnly]
+
+    def list(self, request, *args, **kwargs):
+        """Переопределяем list для добавления заголовков отключения кэширования."""
+        response = super().list(request, *args, **kwargs)
+        response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
 
     def get_permissions(self):
         authenticated_actions = [
@@ -141,34 +153,38 @@ class RecipeViewSet(viewsets.ModelViewSet):
         instance.delete()
 
     def get_queryset(self):
-        """Получение queryset с оптимизацией запросов."""
-        queryset = Recipe.objects.select_related('author').prefetch_related(
-            'tags', 'ingredients', 'favorite_set', 'shoppingcart_set'
-        )
-
-        # Фильтрация по тегам
-        tags = self.request.query_params.get('tags')
-        if tags:
-            queryset = queryset.filter(tags__slug=tags).distinct()
+        """Кастомная фильтрация для правильной работы с тегами."""
+        queryset = Recipe.objects.all()
 
         # Фильтрация по автору
-        author = self.request.query_params.get('author')
-        if author:
-            queryset = queryset.filter(author_id=author)
+        author_id = self.request.query_params.get('author')
+        if author_id:
+            queryset = queryset.filter(author_id=author_id)
+
+        # Фильтрация по тегам
+        tags = self.request.query_params.getlist('tags')
+        if tags:
+            queryset = queryset.filter(tags__slug__in=tags).distinct()
+
+        # Фильтрация по ингредиентам
+        ingredients = self.request.query_params.getlist('ingredients')
+        if ingredients:
+            queryset = queryset.filter(
+                ingredients__id__in=ingredients
+            ).distinct()
 
         # Фильтрация по избранному
         is_favorited = self.request.query_params.get('is_favorited')
-        if is_favorited and self.request.user.is_authenticated:
-            if is_favorited.lower() == 'true':
-                queryset = queryset.filter(favorite__user=self.request.user)
+        if (is_favorited == '1'
+                and self.request.user.is_authenticated):
+            queryset = queryset.filter(favorite__user=self.request.user)
 
-        # Фильтрация по корзине
+        # Фильтрация по корзине покупок
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart')
-        if is_in_shopping_cart and self.request.user.is_authenticated:
-            if is_in_shopping_cart.lower() == 'true':
-                queryset = queryset.filter(
-                    shoppingcart__user=self.request.user)
+        if (is_in_shopping_cart == '1'
+                and self.request.user.is_authenticated):
+            queryset = queryset.filter(shoppingcart__user=self.request.user)
 
         return queryset.order_by('-created')
 

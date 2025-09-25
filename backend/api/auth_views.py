@@ -1,5 +1,4 @@
 import logging
-import re
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -11,24 +10,6 @@ User = get_user_model()
 logger = logging.getLogger(__name__)
 
 
-def _get_user_data(user):
-    """Получение данных пользователя для ответа."""
-    return {
-        'id': user.id,
-        'email': user.email,
-        'username': user.username,
-        'first_name': user.first_name,
-        'last_name': user.last_name,
-        'avatar': user.avatar.url if user.avatar else None,
-    }
-
-
-def _validate_email(email):
-    """Валидация email адреса."""
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
-
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def custom_login(request):
@@ -36,19 +17,12 @@ def custom_login(request):
     email = request.data.get('email')
     password = request.data.get('password')
 
-    logger.info("Login attempt received")
+    logger.info(f"Login attempt for email: {email}")
 
     if not email or not password:
         logger.warning("Missing email or password")
         return Response(
             {'error': 'Необходимо указать email и пароль.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    if not _validate_email(email):
-        logger.warning("Invalid email format")
-        return Response(
-            {'error': 'Неверный формат email адреса.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -59,21 +33,27 @@ def custom_login(request):
         if user.check_password(password) and user.is_active:
             # Создаем или получаем существующий токен из базы данных
             token, created = Token.objects.get_or_create(user=user)
-            logger.info(f"Token {'created' if created else 'retrieved'}")
+            logger.info(f"Token {'created' if created else 'retrieved'}: {token.key}")
             return Response({
                 'auth_token': token.key,
-                'user': _get_user_data(user)
+                'user': {
+                    'id': user.id,
+                    'email': user.email,
+                    'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                }
             })
         else:
-            logger.warning("Invalid password or inactive user")
+            logger.warning(f"Invalid password or inactive user for {email}")
             return Response(
-                {'error': 'Неверный пароль или неактивный пользователь.'},
+                {'error': 'Невозможно войти с предоставленными учетными данными.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
     except User.DoesNotExist:
-        logger.warning("User not found")
+        logger.warning(f"User not found: {email}")
         return Response(
-            {'error': 'Пользователь с таким email не найден.'},
+            {'error': 'Невозможно войти с предоставленными учетными данными.'},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -83,4 +63,11 @@ def custom_login(request):
 def custom_me(request):
     """Кастомный эндпоинт для получения данных текущего пользователя."""
     user = request.user
-    return Response(_get_user_data(user))
+    return Response({
+        'id': user.id,
+        'email': user.email,
+        'username': user.username,
+        'first_name': user.first_name,
+        'last_name': user.last_name,
+        'avatar': user.avatar.url if user.avatar else None,
+    })

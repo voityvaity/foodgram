@@ -12,10 +12,6 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Проверяем аутентификацию
-        if not request.user or not request.user.is_authenticated:
-            return False
-
         # Проверяем возможные поля владельца
         owner = getattr(obj, 'author', None) or getattr(obj, 'user', None)
 
@@ -29,8 +25,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
 class IsAuthenticatedOrCreateOnly(permissions.BasePermission):
     """
-    Разрешение, позволяет неаутентифицированным пользователям
-    только создавать пользователей.
+    Разрешение, позволяет noauth. пользователям только создавать пользователей.
     """
 
     def has_permission(self, request, view):
@@ -48,10 +43,6 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
         # Чтение разрешено для любого запроса
         if request.method in permissions.SAFE_METHODS:
             return True
-
-        # Проверяем аутентификацию
-        if not request.user or not request.user.is_authenticated:
-            return False
 
         # Запись разрешена только автору
         return obj.author == request.user

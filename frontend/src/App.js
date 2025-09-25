@@ -174,18 +174,11 @@ function App() {
         setOrders(count);
       })
       .catch((err) => {
-        console.error('Ошибка при получении корзины:', err);
-        setOrders(0);
+        console.error('Error getting orders:', err);
+        // В случае ошибки оставляем текущий счетчик
       });
   };
 
-  const updateOrders = (add) => {
-    // Всегда проверяем реальное состояние корзины из API
-    // Добавляем небольшую задержку, чтобы дать время API обновиться
-    setTimeout(() => {
-      getOrders();
-    }, 100);
-  };
 
   useEffect((_) => {
     const token = localStorage.getItem("token");
@@ -228,7 +221,7 @@ function App() {
               exact
               path="/user/:id"
               component={User}
-              updateOrders={updateOrders}
+              updateOrders={getOrders}
             />
             <ProtectedRoute
               exact
@@ -236,7 +229,7 @@ function App() {
               component={Cart}
               orders={orders}
               loggedIn={loggedIn}
-              updateOrders={updateOrders}
+              updateOrders={getOrders}
             />
             <ProtectedRoute
               exact
@@ -250,7 +243,7 @@ function App() {
               path="/favorites"
               component={Favorites}
               loggedIn={loggedIn}
-              updateOrders={updateOrders}
+              updateOrders={getOrders}
             />
 
             <ProtectedRoute
@@ -290,7 +283,7 @@ function App() {
               <SingleCard
                 loggedIn={loggedIn}
                 loadItem={loadSingleItem}
-                updateOrders={updateOrders}
+                updateOrders={getOrders}
               />
             </Route>
 
@@ -307,7 +300,7 @@ function App() {
             </Route>
 
             <Route exact path="/recipes">
-              <Main updateOrders={updateOrders} />
+              <Main updateOrders={getOrders} />
             </Route>
 
             <Route exact path="/signin">

@@ -41,15 +41,15 @@ const Card = ({
       )}
       <TagsContainer tags={tags} className={styles.card__tag} />
 
-      <LinkComponent
-        href={`/recipes/${id}`}
-        title={
-          <div
-            className={styles.card__image}
-            style={{ backgroundImage: `url(${image})` }}
+          <LinkComponent
+            href={`/recipes/${id}`}
+            title={
+              <div
+                className={styles.card__image}
+                style={{ backgroundImage: `url(${image})` }}
+              />
+            }
           />
-        }
-      />
       <div className={styles.card__body}>
         <LinkComponent
           className={styles.card__title}
