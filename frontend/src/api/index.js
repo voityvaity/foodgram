@@ -32,7 +32,7 @@ class Api {
   }
 
   signin({ email, password }) {
-    return fetch("/api/auth/token/login/", {
+    return fetch("/api/auth/custom-login/", {
       method: "POST",
       headers: this._headers,
       body: JSON.stringify({
@@ -54,7 +54,7 @@ class Api {
   }
 
   signup({ email, password, username, first_name, last_name }) {
-    return fetch(`/api/users/`, {
+    return fetch(`/api/auth/users/`, {
       method: "POST",
       headers: this._headers,
       body: JSON.stringify({
@@ -69,7 +69,7 @@ class Api {
 
   getUserData() {
     const token = localStorage.getItem("token");
-    return fetch(`/api/users/me/`, {
+    return fetch(`/api/auth/users/me/`, {
       method: "GET",
       headers: {
         ...this._headers,
@@ -80,7 +80,7 @@ class Api {
 
   changePassword({ current_password, new_password }) {
     const token = localStorage.getItem("token");
-    return fetch(`/api/users/set_password/`, {
+    return fetch(`/api/auth/users/set_password/`, {
       method: "POST",
       headers: {
         ...this._headers,
@@ -114,7 +114,7 @@ class Api {
   }
 
   resetPassword({ email }) {
-    return fetch(`/api/users/reset_password/`, {
+    return fetch(`/api/auth/users/reset_password/`, {
       method: "POST",
       headers: {
         ...this._headers,
@@ -264,7 +264,7 @@ class Api {
 
   getUsers({ page = 1, limit = 6 }) {
     const token = localStorage.getItem("token");
-    return fetch(`/api/users/?page=${page}&limit=${limit}`, {
+    return fetch(`/api/auth/users/?page=${page}&limit=${limit}`, {
       method: "GET",
       headers: {
         ...this._headers,
@@ -278,7 +278,7 @@ class Api {
   getSubscriptions({ page, limit = 6, recipes_limit = 3 }) {
     const token = localStorage.getItem("token");
     return fetch(
-      `/api/users/subscriptions/?page=${page}&limit=${limit}&recipes_limit=${recipes_limit}`,
+      `/api/auth/users/subscriptions/?page=${page}&limit=${limit}&recipes_limit=${recipes_limit}`,
       {
         method: "GET",
         headers: {
@@ -291,7 +291,7 @@ class Api {
 
   deleteSubscriptions({ author_id }) {
     const token = localStorage.getItem("token");
-    return fetch(`/api/users/${author_id}/subscribe/`, {
+    return fetch(`/api/auth/users/${author_id}/subscribe/`, {
       method: "DELETE",
       headers: {
         ...this._headers,
@@ -302,7 +302,7 @@ class Api {
 
   subscribe({ author_id }) {
     const token = localStorage.getItem("token");
-    return fetch(`/api/users/${author_id}/subscribe/`, {
+    return fetch(`/api/auth/users/${author_id}/subscribe/`, {
       method: "POST",
       headers: {
         ...this._headers,
@@ -319,7 +319,7 @@ class Api {
       headers: {
         ...this._headers,
       },
-    }).then(this.checkResponse);
+    }).then(this.checkResponse).then(data => data.results || data);
   }
 
   // tags
@@ -329,7 +329,7 @@ class Api {
       headers: {
         ...this._headers,
       },
-    }).then(this.checkResponse);
+    }).then(this.checkResponse).then(data => data.results || data);
   }
 
   addToOrders({ id }) {

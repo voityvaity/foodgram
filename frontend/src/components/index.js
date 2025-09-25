@@ -32,6 +32,9 @@ import AccountMobile from './account-mobile'
 import Orders from './orders'
 import NavMenu from './nav-menu'
 import Popup from './popup'
+import { AvatarPopup } from './avatar-popup'
+import { ChangePasswordText } from './change-password-text'
+import { Notification } from './notification'
 
 export {
   Popup,
@@ -67,5 +70,8 @@ export {
   Subscription,
   SubscriptionList,
   FileInput,
-  IngredientsSearch
+  IngredientsSearch,
+  AvatarPopup,
+  ChangePasswordText,
+  Notification
 }

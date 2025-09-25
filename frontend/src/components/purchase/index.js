@@ -25,7 +25,7 @@ const Purchase = ({
           id,
           toAdd: false,
           callback: () => {
-            updateOrders()
+            updateOrders(false)
             setToDelete(false)
           }
         })

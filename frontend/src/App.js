@@ -7,7 +7,7 @@ import api from "./api";
 import styles from "./styles.module.css";
 
 import {
-  // About,
+  About,
   Main,
   Cart,
   SignIn,
@@ -22,7 +22,7 @@ import {
   NotFound,
   UpdateAvatar,
   ResetPassword,
-  // Technologies,
+  Technologies,
 } from "./pages";
 
 import { AuthContext, UserContext } from "./contexts";
@@ -172,18 +172,19 @@ function App() {
       .then((res) => {
         const { count } = res;
         setOrders(count);
+      })
+      .catch((err) => {
+        console.error('Ошибка при получении корзины:', err);
+        setOrders(0);
       });
   };
 
   const updateOrders = (add) => {
-    if (!add && orders <= 0) {
-      return;
-    }
-    if (add) {
-      setOrders(orders + 1);
-    } else {
-      setOrders(orders - 1);
-    }
+    // Всегда проверяем реальное состояние корзины из API
+    // Добавляем небольшую задержку, чтобы дать время API обновиться
+    setTimeout(() => {
+      getOrders();
+    }, 100);
   };
 
   useEffect((_) => {
@@ -294,8 +295,7 @@ function App() {
             </Route>
 
             <Route exact path="/about">
-              <NotFound />
-              {/* <About component={About} /> */}
+              <About />
             </Route>
 
             <Route exact path="/reset-password">
@@ -303,8 +303,7 @@ function App() {
             </Route>
 
             <Route exact path="/technologies">
-              <NotFound />
-              {/* <Technologies component={Technologies}/> */}
+              <Technologies />
             </Route>
 
             <Route exact path="/recipes">

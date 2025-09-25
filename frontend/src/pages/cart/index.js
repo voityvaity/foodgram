@@ -29,6 +29,11 @@ const Cart = ({ updateOrders, orders }) => {
     getRecipes()
   }, [])
 
+  // Обновляем корзину при изменении
+  useEffect(_ => {
+    getRecipes()
+  }, [orders])
+
   const downloadDocument = () => {
     api.downloadFile()
   }
