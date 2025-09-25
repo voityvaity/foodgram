@@ -192,6 +192,9 @@ STATIC_ROOT = '/app/staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/app/mediafiles'
 
+# Путь к папке с данными для загрузки
+DATA_DIR = '/app/data'
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Настройки CORS

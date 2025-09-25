@@ -14,8 +14,8 @@ class NoCacheMiddleware(MiddlewareMixin):
 
     def process_response(self, request, response):
         # Отключаем кэширование для медиафайлов и API
-        if (request.path.startswith('/media/') or
-                request.path.startswith('/api/')):
+        if (request.path.startswith('/media/')
+                or request.path.startswith('/api/')):
             response['Cache-Control'] = (
                 'no-cache, no-store, must-revalidate, max-age=0'
             )

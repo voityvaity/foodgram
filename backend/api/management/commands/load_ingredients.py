@@ -10,7 +10,7 @@ class Command(BaseCommand):
     help = 'Load ingredients from CSV or JSON'
 
     def handle(self, *args, **options):
-        data_dir = Path('/app/data')
+        data_dir = Path(settings.DATA_DIR)
 
         self.stdout.write(f'Data directory: {data_dir}')
         self.stdout.write(f'Data directory exists: {data_dir.exists()}')

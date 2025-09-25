@@ -117,7 +117,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthorOrReadOnly]
 
     def list(self, request, *args, **kwargs):
-        """Переопределяем list для добавления заголовков отключения кэширования."""
+        """Переопределяем list для добавления заголовков отключения
+        кэширования."""
         response = super().list(request, *args, **kwargs)
         response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         response['Pragma'] = 'no-cache'
