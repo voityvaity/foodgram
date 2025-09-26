@@ -215,3 +215,94 @@ class RecipeAPITestCase(APITestCase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response['Content-Type'], 'text/plain; charset=utf-8')
+
+    def test_ingredient_summing_in_shopping_cart(self):
+        """Тест суммирования ингредиентов в списке покупок."""
+        # Создаем два рецепта с одинаковыми ингредиентами
+        recipe1 = Recipe.objects.create(
+            author=self.user,
+            name='Рецепт 1',
+            text='Описание',
+            cooking_time=30
+        )
+        recipe2 = Recipe.objects.create(
+            author=self.user,
+            name='Рецепт 2',
+            text='Описание',
+            cooking_time=30
+        )
+
+        # Добавляем одинаковые ингредиенты в оба рецепта
+        IngredientInRecipe.objects.create(
+            recipe=recipe1,
+            ingredient=self.ingredient1,
+            amount=200
+        )
+        IngredientInRecipe.objects.create(
+            recipe=recipe2,
+            ingredient=self.ingredient1,
+            amount=300
+        )
+
+        # Добавляем рецепты в корзину
+        ShoppingCart.objects.create(user=self.user, recipe=recipe1)
+        ShoppingCart.objects.create(user=self.user, recipe=recipe2)
+
+        url = reverse('recipe-download-shopping-cart')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Проверяем, что ингредиенты суммировались
+        content = response.content.decode('utf-8')
+        self.assertIn('Мука — 500 г', content)  # 200 + 300 = 500
+
+
+class PostgreSQLTestCase(APITestCase):
+    """Тесты для проверки работы с PostgreSQL."""
+
+    def test_database_connection(self):
+        """Тест подключения к PostgreSQL."""
+        from django.db import connection
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT version();")
+            version = cursor.fetchone()[0]
+            self.assertIn('PostgreSQL', version)
+
+    def test_database_operations(self):
+        """Тест операций с базой данных."""
+        # Создаем пользователя
+        user = User.objects.create_user(
+            email='test@example.com',
+            username='testuser',
+            password='testpass123'
+        )
+
+        # Создаем ингредиент
+        ingredient = Ingredient.objects.create(
+            name='Тестовый ингредиент',
+            measurement_unit='г'
+        )
+
+        # Создаем рецепт
+        recipe = Recipe.objects.create(
+            author=user,
+            name='Тестовый рецепт',
+            text='Описание',
+            cooking_time=30
+        )
+
+        # Проверяем, что данные сохранились
+        self.assertEqual(User.objects.count(), 1)
+        self.assertEqual(Ingredient.objects.count(), 1)
+        self.assertEqual(Recipe.objects.count(), 1)
+
+        # Проверяем связи
+        self.assertEqual(recipe.author, user)
+
+        # Проверяем сложные запросы
+        recipes_with_ingredients = Recipe.objects.filter(
+            ingredientinrecipe__ingredient=ingredient
+        ).distinct()
+        self.assertEqual(recipes_with_ingredients.count(), 0)
