@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from api.models import Tag
+from api.constants import TAG_COLORS
 
 
 class Command(BaseCommand):
@@ -10,17 +11,17 @@ class Command(BaseCommand):
         tags_data = [
             {
                 'name': 'Завтрак',
-                'color': '#E26C2D',
+                'color': TAG_COLORS['breakfast'],
                 'slug': 'breakfast'
             },
             {
                 'name': 'Обед',
-                'color': '#49B64E',
+                'color': TAG_COLORS['lunch'],
                 'slug': 'lunch'
             },
             {
                 'name': 'Ужин',
-                'color': '#8775D2',
+                'color': TAG_COLORS['dinner'],
                 'slug': 'dinner'
             }
         ]

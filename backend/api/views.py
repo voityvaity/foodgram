@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 
 from rest_framework import parsers, permissions, status, viewsets
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
@@ -40,23 +40,9 @@ from .serializers import (
     UserSubscriptionSerializer,
     SetPasswordSerializer,
 )
-
-
-@api_view(['GET'])
-def test_ingredients(request):
-    """Тестовый endpoint для проверки фильтрации ингредиентов."""
-    name = request.GET.get('name')
-    print(f"DEBUG: name parameter = {name}")
-
-    queryset = Ingredient.objects.all()
-    if name:
-        queryset = queryset.filter(name__istartswith=name)
-        print(f"DEBUG: filtered queryset count = {queryset.count()}")
-    else:
-        print("DEBUG: no name parameter, returning all ingredients")
-
-    serializer = IngredientSerializer(queryset, many=True)
-    return Response(serializer.data)
+from .constants import (
+    FILTER_TRUE_VALUE, CACHE_EXPIRES, CONTENT_TYPE_TEXT_PLAIN, BASE64_SEPARATOR
+)
 
 
 User = get_user_model()
@@ -67,35 +53,23 @@ class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Вьюсет чтения ингредиентов."""
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    # Убираем SearchFilter, используем только кастомную фильтрацию
     filter_backends = []
-    # Отключаем пагинацию для ингредиентов
     pagination_class = None
 
     def get_queryset(self):
         """Кастомная фильтрация по параметру name."""
         queryset = Ingredient.objects.all()
         name = self.request.GET.get('name')
-        print(f"DEBUG: name parameter = {name}")
         if name:
-            # Поиск по началу названия ингредиента (регистронезависимый)
             queryset = queryset.filter(name__istartswith=name)
-            print(f"DEBUG: filtered queryset count = {queryset.count()}")
-        else:
-            print("DEBUG: no name parameter, returning all ingredients")
         return queryset
 
     def list(self, request, *args, **kwargs):
         """Переопределяем list для отключения пагинации."""
         queryset = Ingredient.objects.all()
         name = request.GET.get('name')
-        print(f"DEBUG: name parameter = {name}")
         if name:
-            # Поиск по началу названия ингредиента (регистронезависимый)
             queryset = queryset.filter(name__istartswith=name)
-            print(f"DEBUG: filtered queryset count = {queryset.count()}")
-        else:
-            print("DEBUG: no name parameter, returning all ingredients")
 
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -122,16 +96,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response = super().list(request, *args, **kwargs)
         response['Cache-Control'] = 'no-cache, no-store, must-revalidate'
         response['Pragma'] = 'no-cache'
-        response['Expires'] = '0'
+        response['Expires'] = CACHE_EXPIRES
         return response
 
     def get_permissions(self):
-        authenticated_actions = [
-            'create', 'update', 'partial_update', 'destroy',
+        special_actions = [
             'favorite', 'shopping_cart', 'download_shopping_cart'
         ]
-
-        if self.action in authenticated_actions:
+        if self.action in special_actions:
             return [permissions.IsAuthenticated()]
         return [IsAuthorOrReadOnly()]
 
@@ -143,49 +115,32 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
-    def perform_update(self, serializer):
-        if serializer.instance.author != self.request.user:
-            raise permissions.PermissionDenied(
-                'Вы можете редактировать только свои рецепты')
-        serializer.save()
-
-    def perform_destroy(self, instance):
-        if instance.author != self.request.user:
-            raise permissions.PermissionDenied(
-                'Вы можете удалять только свои рецепты')
-        instance.delete()
-
     def get_queryset(self):
         """Кастомная фильтрация для правильной работы с тегами."""
         queryset = Recipe.objects.all()
 
-        # Фильтрация по автору
         author_id = self.request.query_params.get('author')
         if author_id:
             queryset = queryset.filter(author_id=author_id)
 
-        # Фильтрация по тегам
         tags = self.request.query_params.getlist('tags')
         if tags:
             queryset = queryset.filter(tags__slug__in=tags).distinct()
 
-        # Фильтрация по ингредиентам
         ingredients = self.request.query_params.getlist('ingredients')
         if ingredients:
             queryset = queryset.filter(
                 ingredients__id__in=ingredients
             ).distinct()
 
-        # Фильтрация по избранному
         is_favorited = self.request.query_params.get('is_favorited')
-        if (is_favorited == '1'
+        if (is_favorited == FILTER_TRUE_VALUE
                 and self.request.user.is_authenticated):
             queryset = queryset.filter(favorite__user=self.request.user)
 
-        # Фильтрация по корзине покупок
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart')
-        if (is_in_shopping_cart == '1'
+        if (is_in_shopping_cart == FILTER_TRUE_VALUE
                 and self.request.user.is_authenticated):
             queryset = queryset.filter(shoppingcart__user=self.request.user)
 
@@ -264,7 +219,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def download_shopping_cart(self, request):
-        shopping_cart = ShoppingCart.objects.filter(user=request.user)
+        shopping_cart = request.user.shopping_cart.all()
 
         if not shopping_cart.exists():
             return Response(
@@ -292,7 +247,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
 
         response = HttpResponse(
-            shopping_list, content_type='text/plain; charset=utf-8'
+            shopping_list, content_type=CONTENT_TYPE_TEXT_PLAIN
         )
         response['Content-Disposition'] = (
             'attachment; filename="shopping_list.txt"'
@@ -307,10 +262,8 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticatedOrCreateOnly]
 
     def get_permissions(self):
-        # Только владелец может редактировать или удалять свой профиль
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsOwnerOrReadOnly()]
-        # Авторизация обязательна для работы с аватаром, паролем, подписками
         elif self.action in ['me', 'avatar', 'delete_avatar',
                              'set_password', 'subscriptions',
                              'subscribe']:
@@ -335,7 +288,7 @@ class UserViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            format, imgstr = avatar_data.split(';base64,')
+            format, imgstr = avatar_data.split(BASE64_SEPARATOR)
             ext = format.split('/')[-1]
             filename = f"{uuid.uuid4().hex}.{ext}"
 
@@ -375,32 +328,25 @@ class UserViewSet(viewsets.ModelViewSet):
         author = get_object_or_404(User, pk=pk)
 
         if request.method == 'POST':
-            # Проверяем, не пытается ли пользователь подписаться на себя
             if request.user == author:
                 return Response(
                     {'errors': 'Нельзя подписаться на самого себя'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Проверяем, не подписан ли уже пользователь
-            if Subscribe.objects.filter(
-                    user=request.user, author=author).exists():
+            if author.following.filter(user=request.user).exists():
                 return Response(
                     {'errors': 'Вы уже подписаны на этого пользователя'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Создаем подписку
             Subscribe.objects.create(user=request.user, author=author)
-
-            # Возвращаем данные пользователя
             serializer = UserSubscriptionSerializer(
                 author, context={'request': request})
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         elif request.method == 'DELETE':
-            subscription = Subscribe.objects.filter(
-                user=request.user, author=author)
+            subscription = author.following.filter(user=request.user)
             if not subscription.exists():
                 return Response(
                     {'errors': 'Вы не подписаны на этого пользователя'},
@@ -419,7 +365,6 @@ class UserViewSet(viewsets.ModelViewSet):
         user.set_password(serializer.validated_data['new_password'])
         user.save()
 
-        # оставляем пользователя залогиненным
         update_session_auth_hash(request, user)
 
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -427,9 +372,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def subscriptions(self, request):
         """Оптимизировано: сразу подтягиваем author через select_related"""
-        subscriptions = Subscribe.objects.filter(
-            user=request.user
-        ).select_related('author')
+        subscriptions = request.user.follower.select_related('author')
 
         authors = [sub.author for sub in subscriptions]
 

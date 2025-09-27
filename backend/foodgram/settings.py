@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 
 from dotenv import load_dotenv
+from api.constants import DEFAULT_PAGE_SIZE
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -67,7 +68,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': (
         'rest_framework.pagination.PageNumberPagination'
     ),
-    'PAGE_SIZE': 6,
+    'PAGE_SIZE': DEFAULT_PAGE_SIZE,
 }
 
 # Djoser settings

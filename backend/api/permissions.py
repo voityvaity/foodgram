@@ -39,6 +39,19 @@ class IsAuthorOrReadOnly(permissions.BasePermission):
     Разрешение, позволяющее только автору рецепта редактировать и удалять его.
     """
 
+    def has_permission(self, request, view):
+        # Чтение разрешено для любого запроса
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # Для создания нужно быть аутентифицированным
+        if view.action == 'create':
+            return request.user and request.user.is_authenticated
+
+        # Для других действий (update, destroy) проверяем в
+        # has_object_permission
+        return True
+
     def has_object_permission(self, request, view, obj):
         # Чтение разрешено для любого запроса
         if request.method in permissions.SAFE_METHODS:
