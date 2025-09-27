@@ -34,7 +34,7 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 ALLOWED_HOSTS = os.getenv(
-    'ALLOWED_HOSTS', '84.201.177.93,localhost,127.0.0.1'
+    'ALLOWED_HOSTS', '84.201.177.93,localhost,127.0.0.1,foodgram.bazooza.ru'
 ).split(',')
 
 AUTH_USER_MODEL = 'api.User'
@@ -69,6 +69,10 @@ REST_FRAMEWORK = {
         'rest_framework.pagination.PageNumberPagination'
     ),
     'PAGE_SIZE': DEFAULT_PAGE_SIZE,
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
 }
 
 # Djoser settings
