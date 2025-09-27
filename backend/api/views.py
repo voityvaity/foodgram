@@ -217,6 +217,20 @@ class RecipeViewSet(viewsets.ModelViewSet):
             not_exists_message='Рецепт не был в корзине покупок',
         )
 
+    @action(detail=True, methods=['get'])
+    def get_link(self, request, pk=None):
+        """Получить короткую ссылку на рецепт."""
+        recipe = self.get_object()
+
+        # Создаем короткую ссылку (можно использовать внешний сервис)
+        # Пока просто возвращаем полную ссылку
+        base_url = request.build_absolute_uri('/')
+        short_link = f"{base_url}recipes/{recipe.id}/"
+
+        return Response({
+            'short-link': short_link
+        })
+
     @action(detail=False, methods=['get'])
     def download_shopping_cart(self, request):
         shopping_cart = request.user.shopping_cart.all()
