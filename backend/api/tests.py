@@ -262,14 +262,13 @@ class PostgreSQLTestCase(APITestCase):
     """Тесты для проверки работы с PostgreSQL."""
 
     def test_database_connection(self):
-        """Тест подключения к базе данных."""
+        """Тест подключения к PostgreSQL."""
         from django.db import connection
 
         with connection.cursor() as cursor:
-            # Проверяем, что можем выполнить простой запрос
-            cursor.execute("SELECT 1;")
-            result = cursor.fetchone()[0]
-            self.assertEqual(result, 1)
+            cursor.execute("SELECT version();")
+            version = cursor.fetchone()[0]
+            self.assertIn('PostgreSQL', version)
 
     def test_database_operations(self):
         """Тест операций с базой данных."""

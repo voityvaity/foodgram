@@ -136,13 +136,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
         is_favorited = self.request.query_params.get('is_favorited')
         if (is_favorited == FILTER_TRUE_VALUE
                 and self.request.user.is_authenticated):
-            queryset = queryset.filter(favorite__user=self.request.user)
+            queryset = queryset.filter(favorites__user=self.request.user)
 
         is_in_shopping_cart = self.request.query_params.get(
             'is_in_shopping_cart')
         if (is_in_shopping_cart == FILTER_TRUE_VALUE
                 and self.request.user.is_authenticated):
-            queryset = queryset.filter(shoppingcart__user=self.request.user)
+            queryset = queryset.filter(shopping_cart__user=self.request.user)
 
         return queryset.order_by('-created')
 
