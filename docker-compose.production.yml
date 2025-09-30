@@ -34,13 +34,21 @@ services:
       - SECRET_KEY=${SECRET_KEY}
       - DEBUG=${DEBUG}
     command: >
-      sh -c "python manage.py makemigrations &&
+      sh -c "echo 'Starting backend...' &&
+             ls -la /app/data/ &&
+             python manage.py makemigrations &&
              python manage.py migrate &&
-             python manage.py load_ingredients &&
-             python manage.py load_tags &&
+             echo 'Loading ingredients...' &&
+             python manage.py load_ingredients --verbosity=2 &&
+             echo 'Loading tags...' &&
+             python manage.py load_tags --verbosity=2 &&
+             echo 'Collecting static files...' &&
              python manage.py collectstatic --noinput &&
-             python manage.py create_test_users &&
-             python manage.py create_test_recipes --count 12 &&
+             echo 'Creating test users...' &&
+             python manage.py create_test_users --verbosity=2 &&
+             echo 'Creating test recipes...' &&
+             python manage.py create_test_recipes --count 12 --verbosity=2 &&
+             echo 'Starting Gunicorn...' &&
              gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"
     restart: unless-stopped
 
