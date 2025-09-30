@@ -39,6 +39,8 @@ services:
              python manage.py load_ingredients &&
              python manage.py load_tags &&
              python manage.py collectstatic --noinput &&
+             python manage.py create_test_users &&
+             python manage.py create_test_recipes --count 12 &&
              gunicorn foodgram.wsgi:application --bind 0.0.0.0:8000"
     restart: unless-stopped
 
