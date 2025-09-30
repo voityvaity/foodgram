@@ -217,7 +217,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             not_exists_message='Рецепт не был в корзине покупок',
         )
 
-    @action(detail=True, methods=['get'])
+    @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):
         """Получить короткую ссылку на рецепт."""
         recipe = self.get_object()
