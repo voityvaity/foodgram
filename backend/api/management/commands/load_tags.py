@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
-from api.models import Tag
+
 from api.constants import TAG_COLORS
+from api.models import Tag
 
 
 class Command(BaseCommand):
@@ -39,4 +40,5 @@ class Command(BaseCommand):
             else:
                 self.stdout.write(f'Tag already exists: {tag.name}')
 
-        self.stdout.write(f'Total tags: {Tag.objects.count()}')
+        total_tags = Tag.objects.count()
+        self.stdout.write('Total tags: {}'.format(total_tags))

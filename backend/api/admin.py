@@ -1,5 +1,5 @@
-# api/admin.py
 from django.contrib import admin
+
 from .models import Ingredient, Tag, Recipe, Favorite, ShoppingCart, Subscribe
 
 # Register your models here.

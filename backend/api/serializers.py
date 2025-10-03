@@ -1,21 +1,25 @@
+import logging
+import time
+
+from django.contrib.auth import get_user_model, password_validation
+from django.utils.translation import gettext_lazy as _
+from rest_framework import serializers
+from rest_framework.authtoken.models import Token
+
+from .constants import (
+    DEFAULT_RECIPES_LIMIT, MIN_INGREDIENT_AMOUNT, FIELDS_ALL, WRITE_ONLY,
+    MIN_COOKING_TIME, MAX_COOKING_TIME,
+    ERROR_EMAIL_EXISTS, ERROR_USERNAME_EXISTS, ERROR_NO_INGREDIENTS,
+    ERROR_NO_TAGS, ERROR_DUPLICATE_INGREDIENTS, ERROR_INGREDIENTS_NOT_FOUND,
+    ERROR_COOKING_TIME_TOO_SHORT, ERROR_COOKING_TIME_TOO_LONG,
+    ERROR_WRONG_PASSWORD, ERROR_PASSWORDS_NOT_MATCH
+)
+from .fields import Base64ImageField
 from .models import (
     Ingredient,
     IngredientInRecipe,
     Recipe,
     Tag,
-)
-import logging
-import time
-from django.contrib.auth import get_user_model, password_validation
-from django.utils.translation import gettext_lazy as _
-from rest_framework import serializers
-
-from .fields import Base64ImageField
-from .constants import (
-    DEFAULT_RECIPES_LIMIT, MIN_INGREDIENT_AMOUNT, FIELDS_ALL, WRITE_ONLY,
-    ERROR_EMAIL_EXISTS, ERROR_USERNAME_EXISTS, ERROR_NO_INGREDIENTS,
-    ERROR_NO_TAGS, ERROR_DUPLICATE_INGREDIENTS, ERROR_INGREDIENTS_NOT_FOUND,
-    ERROR_WRONG_PASSWORD, ERROR_PASSWORDS_NOT_MATCH
 )
 
 logger = logging.getLogger(__name__)
@@ -30,7 +34,8 @@ class TimestampMixin:
         """Добавляет временную метку к URL для предотвращения кэширования."""
         if url and self.context.get("request"):
             full_url = self.context["request"].build_absolute_uri(url)
-            return f"{full_url}?t={int(time.time())}"
+            timestamp = int(time.time())
+            return "{}?t={}".format(full_url, timestamp)
         return url
 
 
@@ -206,6 +211,18 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(ERROR_NO_TAGS)
         return value
 
+    def validate_cooking_time(self, value):
+        """Валидация времени приготовления."""
+        if value < MIN_COOKING_TIME:
+            raise serializers.ValidationError(
+                ERROR_COOKING_TIME_TOO_SHORT.format(MIN_COOKING_TIME)
+            )
+        if value > MAX_COOKING_TIME:
+            raise serializers.ValidationError(
+                ERROR_COOKING_TIME_TOO_LONG.format(MAX_COOKING_TIME)
+            )
+        return value
+
     def _create_ingredients(self, recipe, ingredients_data):
         """Создает ингредиенты для рецепта с помощью bulk_create."""
         ingredient_objects = []
@@ -372,7 +389,6 @@ class CustomTokenCreateSerializer(serializers.Serializer):
 
     def create(self, validated_data):
         """Создает токен для пользователя."""
-        from rest_framework.authtoken.models import Token
         user = validated_data["user"]
         token, created = Token.objects.get_or_create(user=user)
         return token

@@ -41,5 +41,11 @@ ERROR_NO_INGREDIENTS = "Должен быть хотя бы один ингре�
 ERROR_NO_TAGS = "Должен быть хотя бы один тег."
 ERROR_DUPLICATE_INGREDIENTS = "Ингредиенты не должны повторяться."
 ERROR_INGREDIENTS_NOT_FOUND = "Один или несколько ингредиентов не найдены."
+ERROR_COOKING_TIME_TOO_SHORT = (
+    "Время приготовления не может быть меньше {} минуты."
+)
+ERROR_COOKING_TIME_TOO_LONG = (
+    "Время приготовления не может быть больше {} минут."
+)
 ERROR_WRONG_PASSWORD = "Неверный текущий пароль"
 ERROR_PASSWORDS_NOT_MATCH = "Пароли не совпадают"

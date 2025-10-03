@@ -3,7 +3,9 @@ from django.contrib.auth.models import AbstractUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-from .constants import MIN_COOKING_TIME, MAX_COOKING_TIME
+from .constants import (
+    MIN_COOKING_TIME, MAX_COOKING_TIME, MIN_INGREDIENT_AMOUNT
+)
 
 
 class User(AbstractUser):
@@ -158,7 +160,8 @@ class IngredientInRecipe(models.Model):
         verbose_name='Ингредиент'
     )
     amount = models.PositiveIntegerField(
-        verbose_name='Количество'
+        verbose_name='Количество',
+        validators=[MinValueValidator(MIN_INGREDIENT_AMOUNT)]
     )
 
     class Meta:

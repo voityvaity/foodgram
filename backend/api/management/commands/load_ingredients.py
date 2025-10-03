@@ -1,8 +1,10 @@
 import csv
 import json
 from pathlib import Path
+
 from django.conf import settings
 from django.core.management.base import BaseCommand
+
 from api.models import Ingredient
 
 
@@ -19,8 +21,8 @@ class Command(BaseCommand):
 
         # Загрузка из CSV
         csv_path = data_dir / 'ingredients.csv'
-        self.stdout.write(f'CSV path: {csv_path}')
-        self.stdout.write(f'CSV exists: {csv_path.exists()}')
+        self.stdout.write('CSV path: {}'.format(csv_path))
+        self.stdout.write('CSV exists: {}'.format(csv_path.exists()))
         if csv_path.exists():
             self.stdout.write('Loading from CSV...')
             with open(csv_path, 'r', encoding='utf-8') as file:
@@ -39,8 +41,8 @@ class Command(BaseCommand):
 
         # Загрузка из JSON
         json_path = data_dir / 'ingredients.json'
-        self.stdout.write(f'JSON path: {json_path}')
-        self.stdout.write(f'JSON exists: {json_path.exists()}')
+        self.stdout.write('JSON path: {}'.format(json_path))
+        self.stdout.write('JSON exists: {}'.format(json_path.exists()))
         if json_path.exists():
             self.stdout.write('Loading from JSON...')
             with open(json_path, 'r', encoding='utf-8') as file:
