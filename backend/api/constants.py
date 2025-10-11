@@ -27,6 +27,7 @@ BASE64_SEPARATOR = ';base64,'
 
 # Константы для валидации
 MIN_INGREDIENT_AMOUNT = 1
+MAX_INGREDIENT_AMOUNT = 32000
 
 # Константы для полей сериализаторов
 FIELDS_ALL = '__all__'

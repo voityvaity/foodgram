@@ -7,11 +7,10 @@ from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
 from .constants import (
-    DEFAULT_RECIPES_LIMIT, MIN_INGREDIENT_AMOUNT, FIELDS_ALL, WRITE_ONLY,
-    MIN_COOKING_TIME, MAX_COOKING_TIME,
+    DEFAULT_RECIPES_LIMIT, MIN_INGREDIENT_AMOUNT, MAX_INGREDIENT_AMOUNT,
+    FIELDS_ALL, WRITE_ONLY, MIN_COOKING_TIME, MAX_COOKING_TIME,
     ERROR_EMAIL_EXISTS, ERROR_USERNAME_EXISTS, ERROR_NO_INGREDIENTS,
     ERROR_NO_TAGS, ERROR_DUPLICATE_INGREDIENTS, ERROR_INGREDIENTS_NOT_FOUND,
-    ERROR_COOKING_TIME_TOO_SHORT, ERROR_COOKING_TIME_TOO_LONG,
     ERROR_WRONG_PASSWORD, ERROR_PASSWORDS_NOT_MATCH
 )
 from .fields import Base64ImageField
@@ -174,7 +173,10 @@ class RecipeSerializer(TimestampMixin, serializers.ModelSerializer):
 class IngredientAmountInputSerializer(serializers.Serializer):
     """Входные данные ингредиента: id ингредиента и количество."""
     id = serializers.IntegerField()
-    amount = serializers.IntegerField(min_value=MIN_INGREDIENT_AMOUNT)
+    amount = serializers.IntegerField(
+        min_value=MIN_INGREDIENT_AMOUNT,
+        max_value=MAX_INGREDIENT_AMOUNT
+    )
 
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
@@ -184,6 +186,10 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         many=True, queryset=Tag.objects.all(), write_only=True
     )
     image = Base64ImageField(required=True)
+    cooking_time = serializers.IntegerField(
+        min_value=MIN_COOKING_TIME,
+        max_value=MAX_COOKING_TIME
+    )
 
     class Meta:
         model = Recipe
@@ -209,18 +215,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def validate_tags(self, value):
         if not value:
             raise serializers.ValidationError(ERROR_NO_TAGS)
-        return value
-
-    def validate_cooking_time(self, value):
-        """Валидация времени приготовления."""
-        if value < MIN_COOKING_TIME:
-            raise serializers.ValidationError(
-                ERROR_COOKING_TIME_TOO_SHORT.format(MIN_COOKING_TIME)
-            )
-        if value > MAX_COOKING_TIME:
-            raise serializers.ValidationError(
-                ERROR_COOKING_TIME_TOO_LONG.format(MAX_COOKING_TIME)
-            )
         return value
 
     def _create_ingredients(self, recipe, ingredients_data):
