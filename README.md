@@ -1,71 +1,66 @@
-Находясь в папке infra, выполните команду docker-compose up. При выполнении этой команды контейнер frontend, описанный в docker-compose.yml, подготовит файлы, необходимые для работы фронтенд-приложения, а затем прекратит свою работу.
+# Foodgram
 
-**Крышеснос:** [foodgram.bazooza.ru](https://foodgram.bazooza.ru/recipes) | **Dev:** [84.201.177.93:8080](http://84.201.177.93:8080/)
+Foodgram — сервис рецептов с REST API. Пользователь может публиковать рецепты, собирать избранное, подписываться на авторов и формировать список покупок с суммированием ингредиентов.
 
-По адресу http://localhost изучите фронтенд веб-приложения, а по адресу http://localhost/api/docs/ — спецификацию API.
+## Что реализовано
 
-## Технологии
+- регистрация и токен-аутентификация пользователей;
+- создание, просмотр, изменение и удаление рецептов;
+- поиск ингредиентов и фильтрация рецептов по тегам;
+- избранное, подписки и список покупок;
+- загрузка изображений и выгрузка списка ингредиентов;
+- разграничение прав на изменение объектов;
+- API-документация;
+- контейнерный запуск backend, frontend, PostgreSQL и Nginx;
+- автоматические проверки backend в GitHub Actions.
 
-### Backend
-- **Django 4.2** - веб-фреймворк
-- **Django REST Framework** - API
-- **PostgreSQL** - база данных
-- **Gunicorn** - WSGI сервер
-- **Docker** - контейнеризация
+## Стек
 
-### Frontend
-- **React 18** - пользовательский интерфейс
-- **JavaScript (ES6+)** - язык программирования
-- **CSS Modules** - стилизация
-- **Docker** - контейнеризация
+- Backend: Python 3.11, Django 3.2, Django REST Framework, Djoser, PostgreSQL, Gunicorn.
+- Frontend: React 17, JavaScript, CSS Modules.
+- Инфраструктура: Docker, Docker Compose, Nginx.
+- Проверки: Django test runner, Flake8, GitHub Actions.
 
-### Infrastructure
-- **Nginx** - веб-сервер и прокси
-- **Docker Compose** - оркестрация контейнеров
-- **SSL/TLS** - безопасное соединение
+## Архитектура
 
-## Функциональность
+- `backend/` — модели, сериализаторы, permissions, viewsets, фильтры и API-тесты;
+- `frontend/` — клиентское приложение;
+- `infra/` — локальная Docker Compose-конфигурация и Nginx;
+- `data/` — исходные данные ингредиентов;
+- `docs/` — OpenAPI-схема и документация;
+- `postman_collection/` — коллекция запросов для ручной проверки API.
 
-- **Аутентификация и авторизация** - регистрация, вход, смена пароля
-- **Управление рецептами** - создание, редактирование, удаление
-- **Теги и ингредиенты** - категоризация и поиск
-- **Избранное** - сохранение понравившихся рецептов
-- **Список покупок** - формирование списка ингредиентов
-- **Подписки** - слежение за авторами
-- **Адаптивный дизайн** - работа на всех устройствах
+## Локальный запуск через Docker
 
-## Установка и запуск
+1. Склонируйте репозиторий.
+2. Скопируйте `.env.example` в `infra/.env` и замените демонстрационные значения.
+3. Запустите сервисы:
 
-### Локальная разработка
 ```bash
 cd infra
-docker compose up -d
-docker compose build
-docker compose up -d
+docker compose up --build
 ```
 
-### Деплой на сервер
-```bash
-# Сборка образов
-docker build -t your-username/foodgram-backend:latest backend/
-docker build -t your-username/foodgram-frontend:latest frontend/
-docker build -t your-username/foodgram-nginx:latest infra/
+После запуска приложение доступно на `http://localhost:8080/`, документация API — на `http://localhost:8080/api/docs/`.
 
-# Отправка в Docker Hub
-docker push your-username/foodgram-backend:latest
-docker push your-username/foodgram-frontend:latest
-docker push your-username/foodgram-nginx:latest
+## Проверки backend без PostgreSQL
 
-# На сервере
-docker-compose up -d
+Для быстрых локальных проверок и CI предусмотрен режим SQLite:
+
+```powershell
+$env:USE_SQLITE = "1"
+$env:SECRET_KEY = "local-test-key"
+cd backend
+python manage.py check
+python manage.py test api
 ```
 
-## API Документация
-Полная документация API доступна по адресу `/api/docs/` после запуска проекта.
+Основной Docker-запуск использует PostgreSQL.
+
+## Что демонстрирует проект
+
+Проект показывает проектирование REST API на Django REST Framework, моделирование связей в базе данных, валидацию и разграничение доступа, работу со списком покупок, контейнеризацию и настройку reverse proxy.
 
 ## Автор
-**Егор Фенин** - [@resgep](https://t.me/resgep)
 
-## Лицензия
-MIT License
-
+Егор Фенин — [voityvaity](https://github.com/voityvaity)

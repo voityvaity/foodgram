@@ -28,7 +28,7 @@ load_dotenv(BASE_DIR.parent / '.env')
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv(
     'SECRET_KEY',
-    'django-insecure-f3v4%@4_#0ex2h^3^hj8fqf56jylgmo3o(ztbbqari@9y@jf(g'
+    'dev-only-key-change-before-production',
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -138,16 +138,24 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME', 'foodgram'),
-        'USER': os.getenv('DB_USER', 'foodgram_user'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'foodgram_password'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+if os.getenv('USE_SQLITE', '').lower() in {'1', 'true', 'yes'}:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME', 'foodgram'),
+            'USER': os.getenv('DB_USER', 'foodgram_user'),
+            'PASSWORD': os.getenv('DB_PASSWORD', 'foodgram_password'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 
 # Password validation

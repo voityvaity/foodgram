@@ -1,4 +1,7 @@
+from unittest import skipUnless
+
 from django.contrib.auth import get_user_model
+from django.db import connection
 from django.urls import reverse
 
 from rest_framework import status
@@ -262,10 +265,12 @@ class RecipeAPITestCase(APITestCase):
 class PostgreSQLTestCase(APITestCase):
     """Тесты для проверки работы с PostgreSQL."""
 
+    @skipUnless(
+        connection.vendor == 'postgresql',
+        'Проверка версии выполняется только с PostgreSQL.',
+    )
     def test_database_connection(self):
         """Тест подключения к PostgreSQL."""
-        from django.db import connection
-
         with connection.cursor() as cursor:
             cursor.execute("SELECT version();")
             version = cursor.fetchone()[0]
